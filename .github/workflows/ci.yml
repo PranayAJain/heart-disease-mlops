@@ -1,0 +1,99 @@
+# CI pipeline - MLOps Assignment 1 (heart-disease classifier)
+# Stages: 1) lint + unit tests  2) train + package + verify the model
+# Any failing step stops the pipeline (non-zero exit) and is shown red in GitHub.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  lint-and-test:
+    name: Lint + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Lint (flake8)
+        run: flake8 src scripts tests --statistics
+
+      - name: Unit tests (pytest)
+        run: |
+          mkdir -p reports
+          pytest -v --junitxml=reports/junit.xml 2>&1 | tee reports/pytest_log.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            reports/junit.xml
+            reports/pytest_log.txt
+
+  train:
+    name: Train, package, verify model
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Get data (UCI download, fallback to committed clean CSV)
+        run: |
+          if python scripts/download_data.py; then
+            python -m heart.data
+          else
+            echo "::warning::UCI download failed - using committed data/processed/heart_clean.csv"
+          fi
+
+      - name: Train + tune models (MLflow tracking)
+        run: |
+          set -o pipefail
+          python -m heart.train 2>&1 | tee reports/train_log.txt
+
+      - name: Package final model
+        run: python -m heart.package
+
+      - name: Verify packaged model + quality gate
+        run: |
+          python scripts/verify_model.py
+          pytest -v tests/test_model.py
+
+      - name: Upload model + training artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-and-training-artifacts
+          path: |
+            models/
+            reports/model_comparison.csv
+            reports/train_log.txt
+            mlruns/
+            mlflow.db
+          retention-days: 14
