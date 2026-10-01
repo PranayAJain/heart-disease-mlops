@@ -10,6 +10,7 @@ Protocol:
 Usage:
     python -m heart.train                 # all models
     python -m heart.train --models rf xgb # subset
+    python -m heart.train --no-track      # skip MLflow logging
 """
 from __future__ import annotations
 
@@ -29,6 +30,7 @@ from xgboost import XGBClassifier
 from heart import config
 from heart.data import load_clean
 from heart.features import build_preprocessor, split_xy
+from heart import tracking
 
 SEED = 42
 REPORT_DIR = config.ROOT / "reports"
@@ -75,7 +77,7 @@ def test_metrics(model, X_te, y_te) -> dict:
     }
 
 
-def run(model_names):
+def run(model_names, track=True):
     df = load_clean()
     X, y = split_xy(df)
     X_tr, X_te, y_tr, y_te = train_test_split(
@@ -83,6 +85,8 @@ def run(model_names):
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
     print(f"train={X_tr.shape}  test={X_te.shape}  positives(train)={y_tr.mean():.0%}\n")
 
+    if track:
+        tracking.setup()
     rows, fitted = [], {}
     for name in model_names:
         estimator, grid = MODELS[name]
@@ -102,6 +106,9 @@ def run(model_names):
                                          for k, v in search.best_params_.items()})
         rows.append(row)
         fitted[name] = best
+        if track:
+            row["mlflow_run_id"] = tracking.log_model_run(
+                name, search, best, row, X_tr, X_te, y_te, cv_folds=5, seed=SEED)
         print(f"[{name:6s}] tried {row['n_configs']:3d} configs | "
               f"CV ROC-AUC {row['cv_roc_auc']:.3f} +/- {row['cv_roc_auc_std']:.3f} | "
               f"test ROC-AUC {row['test_roc_auc']:.3f} | best {row['best_params']}")
@@ -122,4 +129,6 @@ def run(model_names):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS))
-    run(ap.parse_args().models)
+    ap.add_argument("--no-track", action="store_true", help="disable MLflow logging")
+    args = ap.parse_args()
+    run(args.models, track=not args.no_track)
