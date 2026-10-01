@@ -7,4 +7,3 @@ mlruns/
 mlflow.db
 mlartifacts/
 data/raw/
-models/*.joblib

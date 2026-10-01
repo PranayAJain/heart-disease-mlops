@@ -1,0 +1,49 @@
+{
+  "model_name": "heart-disease-classifier",
+  "model_version": "202610011710",
+  "model_kind": "logreg",
+  "best_params": {
+    "C": 0.3,
+    "class_weight": "balanced"
+  },
+  "selection_metric": "cv_roc_auc",
+  "cv_metrics": {
+    "cv_accuracy": 0.8469,
+    "cv_precision": 0.8794,
+    "cv_recall": 0.783,
+    "cv_f1": 0.8238,
+    "cv_roc_auc": 0.9082
+  },
+  "test_metrics": {
+    "test_accuracy": 0.8689,
+    "test_precision": 0.8125,
+    "test_recall": 0.9286,
+    "test_f1": 0.8667,
+    "test_roc_auc": 0.96
+  },
+  "decision_threshold": 0.5,
+  "features": [
+    "age",
+    "trestbps",
+    "chol",
+    "thalach",
+    "oldpeak",
+    "ca",
+    "sex",
+    "fbs",
+    "exang",
+    "cp",
+    "restecg",
+    "slope",
+    "thal"
+  ],
+  "trained_rows": 303,
+  "data_md5": "bf8518ecaf",
+  "library_versions": {
+    "scikit-learn": "1.5.2",
+    "pandas": "2.2.3",
+    "mlflow": "2.17.2"
+  },
+  "trained_at_utc": "2026-10-01T17:10:45+00:00",
+  "author": "Pranay Jain"
+}
