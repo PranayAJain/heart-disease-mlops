@@ -1,0 +1,15 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.ipynb_checkpoints
+mlruns
+mlflow.db
+mlartifacts
+data
+notebooks
+reports
+screenshots
+tests
+models/mlflow_model
+*.egg-info
