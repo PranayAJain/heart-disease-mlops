@@ -45,3 +45,23 @@ def predict_records(records: list[dict], model=None, threshold: float | None = N
             "confidence": round(float(p if pred else 1 - p), 4),
         })
     return out
+
+
+def main(argv=None):
+    """CLI inference: python -m heart.predict samples/patient_high_risk.json [more.json ...]"""
+    import argparse
+    ap = argparse.ArgumentParser(description="Predict heart-disease risk for patient JSON file(s)")
+    ap.add_argument("files", nargs="+", help="JSON file with one patient (dict) or a list of patients")
+    args = ap.parse_args(argv)
+    meta = load_metadata()
+    print(f"model: {meta.get('model_kind')}  version: {meta.get('model_version')}")
+    for f in args.files:
+        data = json.loads(Path(f).read_text())
+        records = data if isinstance(data, list) else [data]
+        for rec, res in zip(records, predict_records(records)):
+            print(f"{f}: age={rec.get('age')} cp={rec.get('cp')} thal={rec.get('thal')} -> "
+                  f"{res['label']} (p={res['probability_disease']}, confidence={res['confidence']})")
+
+
+if __name__ == "__main__":
+    main()

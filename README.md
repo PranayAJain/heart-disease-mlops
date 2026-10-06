@@ -63,6 +63,7 @@ jupyter notebook notebooks/01_eda.ipynb  # EDA (Run All)
 python -m heart.train                    # tune + compare 3 models, log to MLflow
 python -m heart.package                  # final model -> models/
 python scripts/verify_model.py           # reload + reproducibility check
+python -m heart.predict samples/patient_high_risk.json   # CLI inference
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000   # http://127.0.0.1:5000
 ```
 
@@ -92,10 +93,13 @@ Interactive API docs: http://localhost:8000/docs
 minikube start --driver=docker
 alias kubectl="minikube kubectl --"
 minikube image load heart-api:1.0
-kubectl apply -f k8s/
+minikube addons enable ingress
+kubectl apply -f k8s/                     # deployment, service, ingress
+curl http://$(minikube ip)/health          # via nginx Ingress (port 80)
 kubectl rollout status deployment/heart-api
 URL=$(minikube service heart-api --url)
 curl -X POST $URL/predict -H "Content-Type: application/json" -d @samples/patient_low_risk.json
+curl http://$(minikube ip)/health          # via nginx Ingress (port 80)
 ```
 
 ## 6. Monitoring (Prometheus + Grafana)
