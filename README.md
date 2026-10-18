@@ -2,6 +2,8 @@
 
 **MLOps (AIMLCZG523) - Assignment 1** | Pranay Jain (2025AE05025)
 
+**Report:** [MLOps_Assignment1_2025AE05025.pdf](MLOps_Assignment1_2025AE05025.pdf) | **Demo video:** [Google Drive](https://drive.google.com/file/d/1UvzbRleW9-w1zu_xFkyD7ZBRElAzbJXo/view?usp=sharing)
+
 A complete, reproducible MLOps pipeline for predicting heart-disease risk from 13 clinical
 features (UCI Heart Disease, Cleveland subset): data acquisition, EDA, model training with
 experiment tracking, packaging, CI/CD, containerised serving, Kubernetes deployment and monitoring.
